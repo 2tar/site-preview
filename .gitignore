@@ -1,0 +1,8 @@
+*
+!.gitignore
+!.nojekyll
+!.github/
+!.github/workflows/
+!.github/workflows/**
+!preview/
+!preview/**

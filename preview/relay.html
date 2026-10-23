@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer-when-downgrade">
+<title>移動中</title>
+<link rel="stylesheet" href="css/lp.css?v=2">
+
+<!-- 本番(GTM経由でdi-PiNK発火)に切り替える場合は、ここに該当の GTM コンテナスニペットを設置し、
+     js/relay.js の CONFIG.mode を "gtm" に変更する。
+     GTM側: カスタムイベント "dipink_relay" をトリガーに di-PiNK タグを発火し、
+     タグシーケンスの後続タグ(カスタムHTML)で window.dipinkRelay.complete() を呼ぶ。 -->
+</head>
+<body class="relay-body">
+<main class="relay">
+	<div class="relay__spinner" aria-hidden="true"></div>
+	<p class="relay__text" id="relay-status" role="status" aria-live="polite">エントリーページへ移動しています…</p>
+	<p class="relay__sub">自動的に移動しない場合は、しばらくお待ちください。</p>
+	<p class="held-params__title">保有パラメータ</p>
+	<dl class="held-params" id="held-params"></dl>
+	<pre class="relay__log" id="relay-log" hidden></pre>
+</main>
+<noscript>
+	<p class="relay__text">JavaScriptを有効にしてください。</p>
+</noscript>
+<script src="js/relay.js?v=3"></script>
+</body>
+</html>
