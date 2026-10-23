@@ -34,6 +34,17 @@
     var statusEl = document.getElementById("relay-status");
     var logEl = document.getElementById("relay-log");
 
+    var stepDefs = [
+        { id: "id", label: "tk / adid を確定" },
+        { id: "data", label: "custom_data をセット" },
+        { id: "insert", label: "itm.js の読み込み開始" },
+        { id: "load", label: "itm.js の読み込み完了" },
+        { id: "grace", label: "読み込み後の待機" },
+        { id: "leave", label: "遷移" }
+    ];
+    var stepState = {};
+    var stepNote = {};
+
     function log(message) {
         var line = "[+" + (Date.now() - startedAt) + "ms] " + message;
         if (window.console) { console.log("[relay] " + line); }
@@ -41,6 +52,69 @@
             logEl.hidden = false;
             logEl.textContent += line + "\n";
         }
+    }
+
+    function renderSteps() {
+        var list = document.getElementById("relay-steps");
+        var marks = { wait: "未着手", run: "進行中", ok: "完了", ng: "失敗" };
+
+        if (!list) {
+            return;
+        }
+
+        list.textContent = "";
+        stepDefs.forEach(function(step) {
+            var state = stepState[step.id] || "wait";
+            var item = document.createElement("li");
+            item.className = "is-" + state;
+            item.textContent = marks[state] + "  " + step.label + (stepNote[step.id] ? "（" + stepNote[step.id] + "）" : "");
+            list.appendChild(item);
+        });
+    }
+
+    function setStep(id, state, note) {
+        stepState[id] = state;
+        if (note) {
+            stepNote[id] = note;
+        }
+        renderSteps();
+    }
+
+    function failOpenSteps(note) {
+        stepDefs.forEach(function(step) {
+            if (step.id === "leave") {
+                return;
+            }
+            var state = stepState[step.id] || "wait";
+            if (state === "wait" || state === "run") {
+                stepState[step.id] = "ng";
+                stepNote[step.id] = note;
+            }
+        });
+    }
+
+    function scriptTiming() {
+        var entries;
+        var i;
+        var entry;
+        var bytes;
+
+        try {
+            entries = window.performance.getEntriesByType("resource");
+        } catch (error) {
+            return "";
+        }
+
+        for (i = entries.length - 1; i >= 0; i--) {
+            entry = entries[i];
+            if (entry.name.indexOf("itm.js") === -1) {
+                continue;
+            }
+            bytes = entry.transferSize || entry.encodedBodySize || 0;
+            return Math.round(entry.duration) + "ms" + (bytes ? " / " + bytes + " bytes" : "");
+        }
+
+        return "";
     }
 
     function loadStored(key) {
@@ -119,13 +193,18 @@
 
         var remain = Math.max(0, CONFIG.minWaitMs - (Date.now() - startedAt));
         log("完了: " + reason);
+        if (reason.indexOf("タイムアウト") !== -1) {
+            failOpenSteps("タイムアウト");
+        }
 
         window.setTimeout(function() {
             if (noRedirect) {
                 setStatus("noredirect=1 のため遷移を停止中");
+                setStep("leave", "ok", "noredirect=1 のため停止");
                 log("遷移先(停止中): " + destination);
                 return;
             }
+            setStep("leave", "ok", "遷移します");
             // replace: 戻るボタンでダミーページへ戻ってリダイレクトがループしないようにする
             window.location.replace(destination);
         }, remain);
@@ -142,7 +221,15 @@
 
         // GTM から完了通知を受けるための口（GTM の後続タグで window.dipinkRelay.complete() を呼ぶ）
         window.dipinkRelay = {
-            complete: function() { finish("GTM/外部から完了通知", destination); }
+            complete: function() {
+                if (stepState.load === "run") {
+                    setStep("load", "ok", "完了通知");
+                }
+                if (!stepState.grace || stepState.grace === "wait" || stepState.grace === "run") {
+                    setStep("grace", "ok", "完了通知");
+                }
+                finish("GTM/外部から完了通知", destination);
+            }
         };
 
         // タイムアウト（タグの成否にかかわらず必ず遷移）
@@ -153,10 +240,13 @@
         dl.push({ "custom_type": "param_A" });
         dl.push({ "custom_rank": "param_B" });
         log("custom_data = " + customData);
+        setStep("data", "ok", customData);
 
         if (CONFIG.mode === "gtm") {
             window.dataLayer = window.dataLayer || [];
             window.dataLayer.push({ "event": "dipink_relay", "custom_data": customData });
+            setStep("insert", "ok", "GTMへイベント送信");
+            setStep("load", "run", "GTMの完了通知待ち");
             log("dataLayer.push(dipink_relay) 済み。GTM側の完了通知を待機");
             return;
         }
@@ -164,17 +254,33 @@
         var s = document.createElement("script");
         s.async = true;
         s.src = CONFIG.dipinkScript;
+        setStep("insert", "run");
         s.onload = function() {
             log("itm.js 読込完了");
-            window.setTimeout(function() { finish("itm.js 読込完了＋" + CONFIG.graceMs + "ms", destination); }, CONFIG.graceMs);
+            setStep("insert", "ok");
+            setStep("load", "ok", scriptTiming());
+            setStep("grace", "run", CONFIG.graceMs + "ms");
+            window.setTimeout(function() {
+                setStep("grace", "ok");
+                finish("itm.js 読込完了＋" + CONFIG.graceMs + "ms", destination);
+            }, CONFIG.graceMs);
         };
         s.onerror = function() {
             log("itm.js 読込失敗");
+            setStep("insert", "ok");
+            setStep("load", "ng", "読み込み失敗");
+            setStep("grace", "ng", "失敗のためスキップ");
             finish("itm.js 読込失敗", destination);
         };
         document.head.appendChild(s);
+        if (stepState.load !== "ok" && stepState.load !== "ng") {
+            setStep("insert", "ok");
+            setStep("load", "run");
+        }
     }
 
+    renderSteps();
+    setStep("id", "run");
     var ids = resolveIds();
     showHeldParams(ids);
     var destination = buildDestination(ids);
@@ -182,14 +288,22 @@
 
     if (!ids) {
         log("tk/adid なし");
+        setStep("id", "ng", "tk/adid なし");
+        setStep("data", "ng", "送信しない");
+        setStep("insert", "ng", "読み込まない");
+        setStep("load", "ng", "読み込まない");
+        setStep("grace", "ng", "待たない");
         if (CONFIG.noIdBehavior === "error") {
             finished = true;
+            setStep("leave", "ng", "停止");
             setStatus("IDを取得できませんでした。お手数ですが、はじめからやり直してください。");
             return;
         }
         finish("tk/adid なしのため送信せず遷移", destination);
         return;
     }
+
+    setStep("id", "ok", ids.tk + " / " + ids.adid);
 
     send(ids, destination);
 })();

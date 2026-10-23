@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer-when-downgrade">
 <title>移動中</title>
-<link rel="stylesheet" href="css/lp.css?v=2">
+<link rel="stylesheet" href="css/lp.css?v=4">
 
 <!-- 本番(GTM経由でdi-PiNK発火)に切り替える場合は、ここに該当の GTM コンテナスニペットを設置し、
      js/relay.js の CONFIG.mode を "gtm" に変更する。
@@ -20,11 +20,13 @@
 	<p class="relay__sub">自動的に移動しない場合は、しばらくお待ちください。</p>
 	<p class="held-params__title">保有パラメータ</p>
 	<dl class="held-params" id="held-params"></dl>
+	<p class="held-params__title">タグの読み込み</p>
+	<ol class="relay__steps" id="relay-steps" aria-live="polite"></ol>
 	<pre class="relay__log" id="relay-log" hidden></pre>
 </main>
 <noscript>
 	<p class="relay__text">JavaScriptを有効にしてください。</p>
 </noscript>
-<script src="js/relay.js?v=3"></script>
+<script src="js/relay.js?v=4"></script>
 </body>
 </html>

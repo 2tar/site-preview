@@ -145,6 +145,35 @@ body {
     color: #777;
 }
 
+.relay__steps {
+    list-style: none;
+    width: 100%;
+    max-width: 420px;
+    margin: 8px 0 0;
+    padding: 0;
+    text-align: left;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.relay__steps li {
+    padding: 4px 0;
+    color: #999;
+}
+
+.relay__steps li.is-run {
+    color: #333;
+    font-weight: bold;
+}
+
+.relay__steps li.is-ok {
+    color: #1a7f37;
+}
+
+.relay__steps li.is-ng {
+    color: #b42318;
+}
+
 .relay__log {
     max-width: 100%;
     margin: 24px 0 0;
