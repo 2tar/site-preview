@@ -145,6 +145,20 @@ body {
     color: #777;
 }
 
+.relay__qr {
+    margin: 12px auto 0;
+    padding: 8px;
+    background: #fff;
+    line-height: 0;
+}
+
+.relay__qr img,
+.relay__qr canvas {
+    display: block;
+    width: 220px;
+    height: 220px;
+}
+
 .relay__dest {
     width: 100%;
     max-width: 420px;

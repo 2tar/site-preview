@@ -117,6 +117,35 @@
         return "";
     }
 
+    function showDestinationQr(url) {
+        var holder = document.getElementById("relay-qr");
+
+        if (!holder || !window.QRCode) {
+            return;
+        }
+
+        try {
+            new window.QRCode(holder, {
+                text: url,
+                width: 220,
+                height: 220,
+                correctLevel: window.QRCode.CorrectLevel.M
+            });
+        } catch (error) {
+            holder.textContent = "";
+            try {
+                new window.QRCode(holder, {
+                    text: url,
+                    width: 220,
+                    height: 220,
+                    correctLevel: window.QRCode.CorrectLevel.L
+                });
+            } catch (secondError) {
+                holder.textContent = "QRコードを作れませんでした";
+            }
+        }
+    }
+
     function loadStored(key) {
         try { return window.sessionStorage.getItem(key) || ""; } catch (e) { return ""; }
     }
@@ -288,6 +317,7 @@
     if (destinationEl) {
         destinationEl.textContent = destination;
     }
+    showDestinationQr(destination);
     log("遷移先: " + destination);
 
     if (!ids) {

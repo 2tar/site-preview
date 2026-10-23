@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer-when-downgrade">
 <title>移動中</title>
-<link rel="stylesheet" href="css/lp.css?v=5">
+<link rel="stylesheet" href="css/lp.css?v=6">
 
 <!-- 本番(GTM経由でdi-PiNK発火)に切り替える場合は、ここに該当の GTM コンテナスニペットを設置し、
      js/relay.js の CONFIG.mode を "gtm" に変更する。
@@ -24,11 +24,13 @@
 	<ol class="relay__steps" id="relay-steps" aria-live="polite"></ol>
 	<p class="held-params__title">とび先</p>
 	<p class="relay__dest" id="relay-dest"></p>
+	<div class="relay__qr" id="relay-qr" role="img" aria-label="とび先のQRコード"></div>
 	<pre class="relay__log" id="relay-log" hidden></pre>
 </main>
 <noscript>
 	<p class="relay__text">JavaScriptを有効にしてください。</p>
 </noscript>
-<script src="js/relay.js?v=5"></script>
+<script src="js/qrcode.js?v=1"></script>
+<script src="js/relay.js?v=6"></script>
 </body>
 </html>
