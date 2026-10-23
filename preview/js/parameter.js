@@ -12,6 +12,29 @@
 
     updateLinks(searchParams);
     showHeldParams(searchParams);
+    bindClearButton();
+
+    function bindClearButton() {
+        var button = document.getElementById("clear-stored");
+
+        if (!button) {
+            return;
+        }
+
+        button.addEventListener("click", function() {
+            try {
+                window.sessionStorage.removeItem("custom_data");
+                window.sessionStorage.removeItem("custom_data_params");
+            } catch (error) {
+                return;
+            }
+
+            var url = new URL(window.location.href);
+            url.searchParams.delete("tk");
+            url.searchParams.delete("adid");
+            window.location.replace(url.pathname + url.search + url.hash);
+        });
+    }
 
     function restoreParameters(params) {
         if (params.get("tk") || params.get("adid")) {

@@ -43,6 +43,19 @@ body {
     text-decoration: underline;
 }
 
+.campaign-demo__clear {
+    display: block;
+    max-width: 360px;
+    margin: 16px auto 0;
+    padding: 10px 16px;
+    border: 1px solid #ccc;
+    border-radius: 9999px;
+    background: #fff;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+}
+
 .held-params__title {
     margin: 28px 0 0;
     font-size: 14px;
