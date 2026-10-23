@@ -284,6 +284,10 @@
     var ids = resolveIds();
     showHeldParams(ids);
     var destination = buildDestination(ids);
+    var destinationEl = document.getElementById("relay-dest");
+    if (destinationEl) {
+        destinationEl.textContent = destination;
+    }
     log("遷移先: " + destination);
 
     if (!ids) {

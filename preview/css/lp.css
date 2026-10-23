@@ -145,6 +145,16 @@ body {
     color: #777;
 }
 
+.relay__dest {
+    width: 100%;
+    max-width: 420px;
+    margin: 8px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: left;
+    word-break: break-all;
+}
+
 .relay__steps {
     list-style: none;
     width: 100%;
