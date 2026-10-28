@@ -6,3 +6,5 @@
 !.github/workflows/**
 !preview/
 !preview/**
+!preview2/
+!preview2/**
