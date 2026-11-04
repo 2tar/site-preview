@@ -3,7 +3,7 @@
    呼び出し例: window.dipinkRelay.complete();
    complete は 0.3 秒待ってから遷移する。
    呼ばれない場合は startRelay の timeoutMs（1000）で、開いてから 1 秒後に遷移する。
-   _gl は prepareRelay の時点から取得を始める。遷移を決める瞬間にもう一度読み、付いていれば URL に載せる。取得の待ちで遷移は延ばさない。
+   _gl は遷移する直前に1回だけ読む。付いていれば URL に載せる。取得の待ちで遷移は延ばさない。
    complete が先に呼ばれていれば、その 1 秒のタイマーは何もしない。
    tk / adid は URL から読む。dataLayer への custom_data 投入はコメントアウト済みで、印は「後で消す」。
 
@@ -18,10 +18,6 @@
 
     var params = new URLSearchParams(window.location.search);
     var parameterNames = ["tk", "adid", "utm_source", "utm_medium", "utm_campaign", "utm_content"];
-    var linkerGl = "";
-    var glLoop = false;
-    var relayFinished = false;
-    var refreshGl = function() {};
 
     if (isRelayPage()) {
         prepareRelay();
@@ -48,8 +44,6 @@
                 }, 300);
             }
         };
-
-        watchGl();
 
         /* 後で消す。GTMがURLの tk / adid を読むなら不要。
         var tk = params.get("tk");
@@ -84,10 +78,6 @@
         var eq;
         var name;
 
-        if (linkerGl) {
-            return linkerGl;
-        }
-
         if (!bridge || typeof bridge.generate !== "function") {
             return "";
         }
@@ -109,35 +99,9 @@
         }
 
         try {
-            linkerGl = String(bridge.generate(cookies) || "");
-            return linkerGl;
+            return String(bridge.generate(cookies) || "");
         } catch (error) {
             return "";
-        }
-    }
-
-    function watchGl() {
-        if (glLoop) {
-            if (linkerGl) {
-                refreshGl();
-            }
-            return;
-        }
-
-        glLoop = true;
-        pollGl();
-
-        function pollGl() {
-            if (relayFinished) {
-                return;
-            }
-
-            if (readGl()) {
-                refreshGl();
-                return;
-            }
-
-            window.setTimeout(pollGl, 200);
         }
     }
 
@@ -214,8 +178,6 @@
         report("data", event ? { state: "ok", note: event.custom_data } : { state: "ng", note: ids ? "dataLayer に無い" : "送らない" });
         */
         report("notice", { state: "run", note: "complete() を待機" });
-        refreshGl = refreshDestination;
-        watchGl();
 
         window.dipinkRelay = window.dipinkRelay || {};
         window.dipinkRelay.redirect = function() {
@@ -293,7 +255,7 @@
                 }
             });
 
-            var gl = linkerGl || readGl();
+            var gl = readGl();
             if (gl) {
                 url.searchParams.set("_gl", gl);
             }
@@ -311,7 +273,6 @@
                 return;
             }
             finished = true;
-            relayFinished = true;
 
             if (reason.indexOf("タイムアウト") !== -1) {
                 report("notice", { state: "ng", note: "呼び出しなし" });
