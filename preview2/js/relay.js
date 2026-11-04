@@ -113,25 +113,47 @@
             }
         });
 
-        var ga = readGa();
-        if (ga) {
-            url.searchParams.set("_ga", ga);
+        var gl = readGl();
+        if (gl) {
+            url.searchParams.set("_gl", gl);
         }
 
         return url.toString();
     }
 
-    function readGa() {
+    function readGl() {
+        var bridge = window.google_tag_data && window.google_tag_data.glBridge;
         var parts = document.cookie ? document.cookie.split("; ") : [];
+        var cookies = {};
         var i;
+        var eq;
+        var name;
 
-        for (i = 0; i < parts.length; i++) {
-            if (parts[i].indexOf("_ga=") === 0) {
-                return decodeURIComponent(parts[i].substring(4));
-            }
+        if (!bridge || typeof bridge.generate !== "function") {
+            return "";
         }
 
-        return "";
+        for (i = 0; i < parts.length; i++) {
+            eq = parts[i].indexOf("=");
+            if (eq < 1) {
+                continue;
+            }
+            name = parts[i].substring(0, eq);
+            if (name !== "_ga" && name.indexOf("_ga_") !== 0 && name !== "_gid" && name !== "_gcl_au") {
+                continue;
+            }
+            cookies[name] = decodeURIComponent(parts[i].substring(eq + 1));
+        }
+
+        if (!cookies._ga) {
+            return "";
+        }
+
+        try {
+            return String(bridge.generate(cookies) || "");
+        } catch (error) {
+            return "";
+        }
     }
 
     function showHeldParams(ids) {
@@ -218,8 +240,8 @@
         showDestination(destination);
     }
 
-    function watchGa() {
-        if (readGa()) {
+    function watchGl() {
+        if (readGl()) {
             refreshDestination();
             return;
         }
@@ -228,7 +250,7 @@
             return;
         }
 
-        window.setTimeout(watchGa, 200);
+        window.setTimeout(watchGl, 200);
     }
 
     var ids = resolveIds();
@@ -238,7 +260,7 @@
     renderSteps();
     showHeldParams(ids);
     showDestination(destination);
-    watchGa();
+    watchGl();
 
     if (!ids) {
         setStep("id", "ng", "tk/adid なし");
