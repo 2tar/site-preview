@@ -3,76 +3,8 @@
 
     var parameterNames = ["tk", "adid", "utm_source", "utm_medium", "utm_campaign", "utm_content"];
     var searchParams = new URLSearchParams(window.location.search);
-    restoreParameters(searchParams);
-    var customData = resolveCustomData(searchParams);
-
-    if (customData) {
-        saveCustomData(customData);
-    }
 
     updateLinks(searchParams);
-
-    function restoreParameters(params) {
-        if (params.get("tk") || params.get("adid")) {
-            return;
-        }
-
-        var storedData = loadCustomData();
-        var values;
-
-        if (!storedData) {
-            return;
-        }
-
-        try {
-            values = JSON.parse(window.sessionStorage.getItem("custom_data_params") || "null");
-        } catch (error) {
-            values = null;
-        }
-
-        if (!Array.isArray(values) || values.length !== 2 ||
-            typeof values[0] !== "string" || typeof values[1] !== "string" ||
-            !values[0] || !values[1] || values[0] + "_" + values[1] !== storedData) {
-            values = storedData.split("_");
-        }
-
-        if (values.length === 2 && values[0] && values[1]) {
-            params.set("tk", values[0]);
-            params.set("adid", values[1]);
-        }
-    }
-
-    function resolveCustomData(params) {
-        var tk = params.get("tk");
-        var adid = params.get("adid");
-
-        if (tk && adid) {
-            try {
-                window.sessionStorage.setItem("custom_data_params", JSON.stringify([tk, adid]));
-            } catch (error) {
-                return tk + "_" + adid;
-            }
-            return tk + "_" + adid;
-        }
-
-        return loadCustomData();
-    }
-
-    function saveCustomData(value) {
-        try {
-            window.sessionStorage.setItem("custom_data", value);
-        } catch (error) {
-            return;
-        }
-    }
-
-    function loadCustomData() {
-        try {
-            return window.sessionStorage.getItem("custom_data") || "";
-        } catch (error) {
-            return "";
-        }
-    }
 
     function updateLinks(params) {
         var links = document.querySelectorAll("a.js-keep-params");

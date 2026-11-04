@@ -48,7 +48,6 @@
         watchContainers();
     } else {
         showHeldParams(indexValues());
-        bindClearButton();
     }
 
     function renderSteps() {
@@ -99,10 +98,9 @@
     }
 
     function indexValues() {
-        var stored = (params.get("tk") || params.get("adid")) ? null : storedIds();
         var values = {
-            tk: params.get("tk") || (stored && stored.tk) || "",
-            adid: params.get("adid") || (stored && stored.adid) || ""
+            tk: params.get("tk") || "",
+            adid: params.get("adid") || ""
         };
 
         utmNames.forEach(function(name) {
@@ -121,52 +119,6 @@
             values[name] = params.get(name) || "";
         });
         return values;
-    }
-
-    function storedIds() {
-        var data;
-        var saved;
-        var parts;
-
-        try {
-            data = window.sessionStorage.getItem("custom_data") || "";
-            saved = JSON.parse(window.sessionStorage.getItem("custom_data_params") || "null");
-        } catch (error) {
-            return null;
-        }
-
-        if (Array.isArray(saved) && saved.length === 2 && saved[0] && saved[1] && saved[0] + "_" + saved[1] === data) {
-            return { tk: saved[0], adid: saved[1] };
-        }
-
-        parts = data.split("_");
-        if (parts.length === 2 && parts[0] && parts[1]) {
-            return { tk: parts[0], adid: parts[1] };
-        }
-
-        return null;
-    }
-
-    function bindClearButton() {
-        var button = document.getElementById("clear-stored");
-
-        if (!button) {
-            return;
-        }
-
-        button.addEventListener("click", function() {
-            try {
-                window.sessionStorage.removeItem("custom_data");
-                window.sessionStorage.removeItem("custom_data_params");
-            } catch (error) {
-                return;
-            }
-
-            var url = new URL(window.location.href);
-            url.searchParams.delete("tk");
-            url.searchParams.delete("adid");
-            window.location.replace(url.pathname + url.search + url.hash);
-        });
     }
 
     function showDestination(url) {

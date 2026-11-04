@@ -146,22 +146,10 @@
         }
     }
 
-    function loadStored(key) {
-        try { return window.sessionStorage.getItem(key) || ""; } catch (e) { return ""; }
-    }
-
     function resolveIds() {
         var tk = params.get("tk");
         var adid = params.get("adid");
 
-        if (!tk || !adid) {
-            var stored = loadStored("custom_data").split("_");
-            if (stored.length === 2 && stored[0] && stored[1]) {
-                tk = stored[0];
-                adid = stored[1];
-                log("URLに無いため sessionStorage から復元");
-            }
-        }
         return (tk && adid) ? { tk: tk, adid: adid } : null;
     }
 
@@ -241,12 +229,6 @@
 
     function send(ids, destination) {
         var customData = ids.tk + "_" + ids.adid;
-
-        // 同一セッションの他ページ（LP等）と値を揃える
-        try {
-            window.sessionStorage.setItem("custom_data", customData);
-            window.sessionStorage.setItem("custom_data_params", JSON.stringify([ids.tk, ids.adid]));
-        } catch (e) { /* noop */ }
 
         // GTM から完了通知を受けるための口（GTM の後続タグで window.dipinkRelay.complete() を呼ぶ）
         window.dipinkRelay = {

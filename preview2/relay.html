@@ -7,7 +7,7 @@
 <meta name="referrer" content="no-referrer-when-downgrade">
 <title>移動中</title>
 <link rel="stylesheet" href="css/lp.css?v=3">
-<link rel="stylesheet" href="css/debug.css?v=1">
+<link rel="stylesheet" href="css/debug.css?v=2">
 <script>
 window.dataLayer = window.dataLayer || [];
 window.dipinkRelay = window.dipinkRelay || {
@@ -25,25 +25,8 @@ window.dipinkRelay = window.dipinkRelay || {
 	var adid = params.get("adid");
 
 	if (!tk || !adid) {
-		try {
-			var stored = (window.sessionStorage.getItem("custom_data") || "").split("_");
-			if (stored.length === 2 && stored[0] && stored[1]) {
-				tk = stored[0];
-				adid = stored[1];
-			}
-		} catch (error) {
-			return;
-		}
-	}
-
-	if (!tk || !adid) {
 		return;
 	}
-
-	try {
-		window.sessionStorage.setItem("custom_data", tk + "_" + adid);
-		window.sessionStorage.setItem("custom_data_params", JSON.stringify([tk, adid]));
-	} catch (error) {}
 
 	window.dataLayer.push({
 		event: "dipink_relay",
@@ -93,7 +76,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 	<p class="relay__dest" id="relay-dest"></p>
 	<!-- DEBUG END -->
 </main>
-<script src="js/debug.js?v=1"></script>
+<script src="js/debug.js?v=2"></script>
 <script src="js/relay.js?v=5"></script>
 </body>
 </html>
