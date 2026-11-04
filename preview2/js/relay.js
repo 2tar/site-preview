@@ -113,7 +113,25 @@
             }
         });
 
+        var ga = readGa();
+        if (ga) {
+            url.searchParams.set("_ga", ga);
+        }
+
         return url.toString();
+    }
+
+    function readGa() {
+        var parts = document.cookie ? document.cookie.split("; ") : [];
+        var i;
+
+        for (i = 0; i < parts.length; i++) {
+            if (parts[i].indexOf("_ga=") === 0) {
+                return decodeURIComponent(parts[i].substring(4));
+            }
+        }
+
+        return "";
     }
 
     function showHeldParams(ids) {
@@ -168,6 +186,7 @@
         }
 
         window.setTimeout(function() {
+            refreshDestination();
             if (noRedirect) {
                 setStatus("noredirect=1 のため遷移を停止中");
                 setStep("leave", "ok", "noredirect=1 のため停止");
@@ -194,6 +213,24 @@
         window.setTimeout(watchContainers, 200);
     }
 
+    function refreshDestination() {
+        destination = buildDestination(ids);
+        showDestination(destination);
+    }
+
+    function watchGa() {
+        if (readGa()) {
+            refreshDestination();
+            return;
+        }
+
+        if (Date.now() - startedAt > CONFIG.timeoutMs) {
+            return;
+        }
+
+        window.setTimeout(watchGa, 200);
+    }
+
     var ids = resolveIds();
     var destination = buildDestination(ids);
     var event = pushedEvent();
@@ -201,6 +238,7 @@
     renderSteps();
     showHeldParams(ids);
     showDestination(destination);
+    watchGa();
 
     if (!ids) {
         setStep("id", "ng", "tk/adid なし");
