@@ -145,25 +145,9 @@
 
     function showDestination(url) {
         var destinationEl = document.getElementById("relay-dest");
-        var holder = document.getElementById("relay-qr");
 
         if (destinationEl) {
             destinationEl.textContent = url;
-        }
-
-        if (!holder || !window.QRCode) {
-            return;
-        }
-
-        try {
-            new window.QRCode(holder, {
-                text: url,
-                width: 220,
-                height: 220,
-                correctLevel: window.QRCode.CorrectLevel.M
-            });
-        } catch (error) {
-            holder.textContent = "QRコードを作れませんでした";
         }
     }
 
