@@ -3,7 +3,7 @@
    呼び出し例: window.dipinkRelay.complete();
    complete は 0.3 秒待ってから遷移する。
    呼ばれない場合は startRelay の timeoutMs（1000）で、開いてから 1 秒後に遷移する。
-   _gl の更新もこの 1 秒で打ち切る。1.3 秒までは延ばさない。
+   _gl は prepareRelay の時点から取得を始める。遷移を決める瞬間にもう一度読み、付いていれば URL に載せる。取得の待ちで遷移は延ばさない。
    complete が先に呼ばれていれば、その 1 秒のタイマーは何もしない。
    tk / adid は URL から読む。dataLayer への custom_data 投入はコメントアウト済みで、印は「後で消す」。
 
@@ -18,6 +18,10 @@
 
     var params = new URLSearchParams(window.location.search);
     var parameterNames = ["tk", "adid", "utm_source", "utm_medium", "utm_campaign", "utm_content"];
+    var linkerGl = "";
+    var glLoop = false;
+    var relayFinished = false;
+    var refreshGl = function() {};
 
     if (isRelayPage()) {
         prepareRelay();
@@ -45,6 +49,8 @@
             }
         };
 
+        watchGl();
+
         /* 後で消す。GTMがURLの tk / adid を読むなら不要。
         var tk = params.get("tk");
         var adid = params.get("adid");
@@ -69,6 +75,71 @@
 
         updateLinks(params);
     };
+
+    function readGl() {
+        var bridge = window.google_tag_data && window.google_tag_data.glBridge;
+        var parts = document.cookie ? document.cookie.split("; ") : [];
+        var cookies = {};
+        var i;
+        var eq;
+        var name;
+
+        if (linkerGl) {
+            return linkerGl;
+        }
+
+        if (!bridge || typeof bridge.generate !== "function") {
+            return "";
+        }
+
+        for (i = 0; i < parts.length; i++) {
+            eq = parts[i].indexOf("=");
+            if (eq < 1) {
+                continue;
+            }
+            name = parts[i].substring(0, eq);
+            if (name !== "_ga" && name.indexOf("_ga_") !== 0 && name !== "_gid" && name !== "_gcl_au") {
+                continue;
+            }
+            cookies[name] = decodeURIComponent(parts[i].substring(eq + 1));
+        }
+
+        if (!cookies._ga) {
+            return "";
+        }
+
+        try {
+            linkerGl = String(bridge.generate(cookies) || "");
+            return linkerGl;
+        } catch (error) {
+            return "";
+        }
+    }
+
+    function watchGl() {
+        if (glLoop) {
+            if (linkerGl) {
+                refreshGl();
+            }
+            return;
+        }
+
+        glLoop = true;
+        pollGl();
+
+        function pollGl() {
+            if (relayFinished) {
+                return;
+            }
+
+            if (readGl()) {
+                refreshGl();
+                return;
+            }
+
+            window.setTimeout(pollGl, 200);
+        }
+    }
 
     function updateLinks(current) {
         var links = document.querySelectorAll("a.js-keep-params");
@@ -128,7 +199,6 @@
             passParams: ["tk", "adid"],
             utmParams: ["utm_source", "utm_medium", "utm_campaign", "utm_content"]
         };
-        var startedAt = Date.now();
         var finished = false;
         var ids = resolveIds();
         var destination = buildDestination(ids);
@@ -144,6 +214,7 @@
         report("data", event ? { state: "ok", note: event.custom_data } : { state: "ng", note: ids ? "dataLayer に無い" : "送らない" });
         */
         report("notice", { state: "run", note: "complete() を待機" });
+        refreshGl = refreshDestination;
         watchGl();
 
         window.dipinkRelay = window.dipinkRelay || {};
@@ -222,7 +293,7 @@
                 }
             });
 
-            var gl = readGl();
+            var gl = linkerGl || readGl();
             if (gl) {
                 url.searchParams.set("_gl", gl);
             }
@@ -230,57 +301,9 @@
             return url.toString();
         }
 
-        function readGl() {
-            var bridge = window.google_tag_data && window.google_tag_data.glBridge;
-            var parts = document.cookie ? document.cookie.split("; ") : [];
-            var cookies = {};
-            var i;
-            var eq;
-            var name;
-
-            if (!bridge || typeof bridge.generate !== "function") {
-                return "";
-            }
-
-            for (i = 0; i < parts.length; i++) {
-                eq = parts[i].indexOf("=");
-                if (eq < 1) {
-                    continue;
-                }
-                name = parts[i].substring(0, eq);
-                if (name !== "_ga" && name.indexOf("_ga_") !== 0 && name !== "_gid" && name !== "_gcl_au") {
-                    continue;
-                }
-                cookies[name] = decodeURIComponent(parts[i].substring(eq + 1));
-            }
-
-            if (!cookies._ga) {
-                return "";
-            }
-
-            try {
-                return String(bridge.generate(cookies) || "");
-            } catch (error) {
-                return "";
-            }
-        }
-
         function refreshDestination() {
             destination = buildDestination(ids);
             report("url", destination);
-        }
-
-        function watchGl() {
-            if (readGl()) {
-                refreshDestination();
-                return;
-            }
-
-            if (finished || Date.now() - startedAt > CONFIG.timeoutMs) {
-                return;
-            }
-
-            window.setTimeout(watchGl, 200);
         }
 
         function finish(reason) {
@@ -288,6 +311,7 @@
                 return;
             }
             finished = true;
+            relayFinished = true;
 
             if (reason.indexOf("タイムアウト") !== -1) {
                 report("notice", { state: "ng", note: "呼び出しなし" });
