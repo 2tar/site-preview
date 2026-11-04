@@ -13,10 +13,17 @@ window.dataLayer = window.dataLayer || [];
 window.dipinkRelay = window.dipinkRelay || {
 	done: false,
 	complete: function() {
-		window.dipinkRelay.done = true;
-		if (typeof window.dipinkRelay.onComplete === "function") {
-			window.dipinkRelay.onComplete();
+		if (window.dipinkRelay.done) {
+			return;
 		}
+		window.dipinkRelay.done = true;
+		window.setTimeout(function() {
+			if (typeof window.dipinkRelay.redirect === "function") {
+				window.dipinkRelay.redirect();
+				return;
+			}
+			window.dipinkRelay.pendingRedirect = true;
+		}, 300);
 	}
 };
 (function() {
@@ -76,7 +83,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 	<p class="relay__dest" id="relay-dest"></p>
 	<!-- DEBUG END -->
 </main>
-<script src="js/debug.js?v=2"></script>
-<script src="js/relay.js?v=5"></script>
+<script src="js/debug.js?v=3"></script>
+<script src="js/relay.js?v=6"></script>
 </body>
 </html>

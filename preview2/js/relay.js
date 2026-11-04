@@ -5,7 +5,8 @@
     "use strict";
 
     var CONFIG = {
-        timeoutMs: 3000,
+        timeoutMs: 1000,
+        graceMs: 300,
         destinations: {
             line: "https://miniapp.line.me/2009418018-P1HREl3z"
         },
@@ -136,7 +137,7 @@
             return;
         }
 
-        if (Date.now() - startedAt > CONFIG.timeoutMs) {
+        if (finished || Date.now() - startedAt > CONFIG.timeoutMs + CONFIG.graceMs) {
             return;
         }
 
@@ -150,7 +151,7 @@
         finished = true;
 
         if (reason.indexOf("タイムアウト") !== -1) {
-            debugEmit("notice", { state: "ng", note: "完了通知なし" });
+            debugEmit("notice", { state: "ng", note: "呼び出しなし" });
         }
 
         window.setTimeout(function() {
@@ -176,22 +177,24 @@
         ids: ids
     });
     debugEmit("data", event ? { state: "ok", note: event.custom_data } : { state: "ng", note: ids ? "dataLayer に無い" : "送らない" });
-    debugEmit("notice", { state: "run", note: "タグシーケンスの完了通知を待機" });
+    debugEmit("notice", { state: "run", note: "complete() を待機" });
     watchGl();
 
     window.dipinkRelay = window.dipinkRelay || {};
-    window.dipinkRelay.onComplete = function() {
-        debugEmit("notice", { state: "ok" });
-        finish("GTMから完了通知");
+    window.dipinkRelay.redirect = function() {
+        debugEmit("notice", { state: "ok", note: "0.3秒待機のあと遷移" });
+        finish("GTMのcomplete()");
     };
 
-    if (window.dipinkRelay.done) {
-        debugEmit("notice", { state: "ok" });
-        finish("GTMから完了通知");
+    if (window.dipinkRelay.pendingRedirect) {
+        window.dipinkRelay.redirect();
         return;
     }
 
     window.setTimeout(function() {
+        if (window.dipinkRelay.done) {
+            return;
+        }
         finish("タイムアウト(" + CONFIG.timeoutMs + "ms)");
     }, CONFIG.timeoutMs);
 })();

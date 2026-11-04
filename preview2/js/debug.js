@@ -10,14 +10,10 @@
 
     var params = new URLSearchParams(window.location.search);
     var utmNames = ["utm_source", "utm_medium", "utm_campaign", "utm_content"];
-    var containers = ["GTM-M4RDPRQ", "GTM-NDXPKRP", "GTM-5MTD7V", "GTM-T9WR56C"];
-    var startedAt = Date.now();
-    var timeoutMs = 3000;
     var stepDefs = [
         { id: "id", label: "tk / adid を確定" },
         { id: "data", label: "dataLayer へ custom_data を送る" },
-        { id: "gtm", label: "GTM コンテナを読み込む" },
-        { id: "notice", label: "GTM からの完了通知" },
+        { id: "notice", label: "GTM の complete()" },
         { id: "leave", label: "遷移" }
     ];
     var stepState = {};
@@ -44,8 +40,6 @@
     if (document.body.classList.contains("relay-body")) {
         renderSteps();
         showHeldParams(heldValues(null));
-        setStep("gtm", "run");
-        watchContainers();
     } else {
         showHeldParams(indexValues());
     }
@@ -137,22 +131,4 @@
         }
     }
 
-    function watchContainers() {
-        var manager = window.google_tag_manager || {};
-        var found = containers.filter(function(id) {
-            return !!manager[id];
-        });
-
-        if (found.length) {
-            setStep("gtm", "ok", found.join(" "));
-            return;
-        }
-
-        if (Date.now() - startedAt > timeoutMs) {
-            setStep("gtm", "ng", "読み込めない");
-            return;
-        }
-
-        window.setTimeout(watchContainers, 200);
-    }
 })();
