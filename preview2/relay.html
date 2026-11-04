@@ -8,39 +8,7 @@
 <title>移動中</title>
 <link rel="stylesheet" href="css/lp.css?v=3">
 <link rel="stylesheet" href="css/debug.css?v=2">
-<script>
-window.dataLayer = window.dataLayer || [];
-window.dipinkRelay = window.dipinkRelay || {
-	done: false,
-	complete: function() {
-		if (window.dipinkRelay.done) {
-			return;
-		}
-		window.dipinkRelay.done = true;
-		window.setTimeout(function() {
-			if (typeof window.dipinkRelay.redirect === "function") {
-				window.dipinkRelay.redirect();
-				return;
-			}
-			window.dipinkRelay.pendingRedirect = true;
-		}, 300);
-	}
-};
-(function() {
-	var params = new URLSearchParams(window.location.search);
-	var tk = params.get("tk");
-	var adid = params.get("adid");
-
-	if (!tk || !adid) {
-		return;
-	}
-
-	window.dataLayer.push({
-		event: "dipink_relay",
-		custom_data: tk + "_" + adid
-	});
-})();
-</script>
+<script src="js/parameter.js?v=4"></script>
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
@@ -72,8 +40,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 	<p class="relay__text" id="relay-status" role="status" aria-live="polite">エントリーページへ移動しています…</p>
 	<p class="relay__sub">自動的に移動しない場合は、しばらくお待ちください。</p>
 	<!-- DEBUG START
-	     外すときは、このブロックと css/debug.css と js/debug.js、
-	     それに js/relay.js の debugEmit と debugHolds を消す。 -->
+	     外すときは、このブロックと css/debug.css、
+	     js/parameter.js の DEBUG ブロックと debugEmit / debugHolds を消す。 -->
 	<p class="debug-note">計測タグは GTM のみ</p>
 	<p class="held-params__title">保有パラメータ</p>
 	<dl class="held-params" id="held-params"></dl>
@@ -83,7 +51,5 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 	<p class="relay__dest" id="relay-dest"></p>
 	<!-- DEBUG END -->
 </main>
-<script src="js/debug.js?v=3"></script>
-<script src="js/relay.js?v=6"></script>
 </body>
 </html>
