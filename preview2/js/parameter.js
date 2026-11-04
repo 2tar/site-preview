@@ -1,9 +1,9 @@
-/* 確認用ページとリダイレクトページのスクリプト。
-   デバッグ表示は下の DEBUG ブロック。外すときは次を消す。
-   1. index.html / relay.html の DEBUG ブロック
-   2. css/debug.css の読み込み
-   3. このファイルの DEBUG ブロック
-   4. debugEmit の呼び出しと debugHolds の分岐 */
+/* 確認用の表示を消す場所は、次の印だけ。
+   - このファイル末尾の DEBUG START 〜 DEBUG END
+   - index.html と relay.html の DEBUG CSS の1行
+   - index.html と relay.html の DEBUG START 〜 DEBUG END
+   - css/debug.css
+   途中の report() は、DEBUG ブロックを消すと何もしなくなる。 */
 (function() {
     "use strict";
 
@@ -12,12 +12,6 @@
 
     if (isRelayPage()) {
         prepareRelay();
-    }
-
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", start);
-    } else {
-        start();
     }
 
     function isRelayPage() {
@@ -56,16 +50,14 @@
         });
     }
 
-    function start() {
-        installDebug();
-
+    var start = function() {
         if (document.body.classList.contains("relay-body")) {
             startRelay();
             return;
         }
 
         updateLinks(params);
-    }
+    };
 
     function updateLinks(current) {
         var links = document.querySelectorAll("a.js-keep-params");
@@ -132,19 +124,19 @@
         var destination = buildDestination(ids);
         var event = pushedEvent();
 
-        debugEmit("url", destination);
-        debugEmit("id", {
+        report("url", destination);
+        report("id", {
             state: ids ? "ok" : "ng",
             note: ids ? ids.tk + " / " + ids.adid : "tk/adid なし",
             ids: ids
         });
-        debugEmit("data", event ? { state: "ok", note: event.custom_data } : { state: "ng", note: ids ? "dataLayer に無い" : "送らない" });
-        debugEmit("notice", { state: "run", note: "complete() を待機" });
+        report("data", event ? { state: "ok", note: event.custom_data } : { state: "ng", note: ids ? "dataLayer に無い" : "送らない" });
+        report("notice", { state: "run", note: "complete() を待機" });
         watchGl();
 
         window.dipinkRelay = window.dipinkRelay || {};
         window.dipinkRelay.redirect = function() {
-            debugEmit("notice", { state: "ok", note: "0.3秒待機のあと遷移" });
+            report("notice", { state: "ok", note: "0.3秒待機のあと遷移" });
             finish("GTMのcomplete()");
         };
 
@@ -258,7 +250,7 @@
 
         function refreshDestination() {
             destination = buildDestination(ids);
-            debugEmit("url", destination);
+            report("url", destination);
         }
 
         function watchGl() {
@@ -281,37 +273,38 @@
             finished = true;
 
             if (reason.indexOf("タイムアウト") !== -1) {
-                debugEmit("notice", { state: "ng", note: "呼び出しなし" });
+                report("notice", { state: "ng", note: "呼び出しなし" });
             }
 
             window.setTimeout(function() {
                 refreshDestination();
-                if (debugHolds()) {
-                    debugEmit("status", "noredirect=1 のため遷移を停止中");
-                    debugEmit("leave", { state: "ok", note: "noredirect=1 のため停止" });
+                if (holdRedirect()) {
+                    report("status", "noredirect=1 のため遷移を停止中");
+                    report("leave", { state: "ok", note: "noredirect=1 のため停止" });
                     return;
                 }
-                debugEmit("leave", { state: "ok", note: "遷移します" });
+                report("leave", { state: "ok", note: "遷移します" });
                 window.location.replace(destination);
             }, 0);
         }
     }
 
-    function debugEmit(type, detail) {
-        var debug = window.dipinkDebug;
-        if (debug && typeof debug.on === "function") {
-            debug.on(type, detail);
-        }
-    }
+    /* DEBUG ブロックを消したあとは、この2つが空のまま残る。 */
+    function report() {}
 
-    function debugHolds() {
-        return !!(window.dipinkDebug && window.dipinkDebug.hold);
+    function holdRedirect() {
+        return false;
     }
 
     /* DEBUG START
-       外すときはこの関数と、その呼び出し installDebug()、
-       debugEmit の呼び出し、debugHolds の分岐を消す。 */
-    function installDebug() {
+       このコメントの行から、下の DEBUG END の行までを消す。
+       ほかに消す場所:
+       - index.html と relay.html の「DEBUG CSS」の1行
+       - index.html と relay.html の DEBUG START 〜 DEBUG END
+       - css/debug.css
+       ここを消したあとも、上の report と holdRedirect はそのまま残す。 */
+    (function() {
+        var openPage = start;
         var utmNames = ["utm_source", "utm_medium", "utm_campaign", "utm_content"];
         var stepDefs = [
             { id: "id", label: "tk / adid を確定" },
@@ -322,31 +315,34 @@
         var stepState = {};
         var stepNote = {};
 
-        window.dipinkDebug = {
-            hold: params.get("noredirect") === "1",
-            on: function(type, detail) {
-                if (type === "status") {
-                    setStatus(detail);
-                    return;
-                }
-                if (type === "url") {
-                    showDestination(detail);
-                    return;
-                }
-                if (type === "id") {
-                    showHeldParams(heldValues(detail.ids));
-                }
-                setStep(type, detail.state, detail.note);
+        start = function() {
+            if (document.body.classList.contains("relay-body")) {
+                renderSteps();
+                showHeldParams(heldValues(null));
+            } else {
+                showHeldParams(indexValues());
             }
+            openPage();
         };
 
-        if (document.body.classList.contains("relay-body")) {
-            renderSteps();
-            showHeldParams(heldValues(null));
-            return;
-        }
+        report = function(type, detail) {
+            if (type === "status") {
+                setStatus(detail);
+                return;
+            }
+            if (type === "url") {
+                showDestination(detail);
+                return;
+            }
+            if (type === "id") {
+                showHeldParams(heldValues(detail.ids));
+            }
+            setStep(type, detail.state, detail.note);
+        };
 
-        showHeldParams(indexValues());
+        holdRedirect = function() {
+            return params.get("noredirect") === "1";
+        };
 
         function renderSteps() {
             var list = document.getElementById("relay-steps");
@@ -434,6 +430,14 @@
                 statusEl.textContent = text;
             }
         }
-    }
+    })();
     /* DEBUG END */
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function() {
+            start();
+        });
+    } else {
+        start();
+    }
 })();

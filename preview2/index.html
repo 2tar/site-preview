@@ -7,8 +7,9 @@
 <meta name="referrer" content="no-referrer-when-downgrade">
 <title>確認用ページ</title>
 <link rel="stylesheet" href="css/lp.css?v=2">
+<!-- DEBUG CSS この1行を消す -->
 <link rel="stylesheet" href="css/debug.css?v=2">
-<script src="js/parameter.js?v=4"></script>
+<script src="js/parameter.js?v=5"></script>
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
@@ -37,9 +38,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T9WR56C" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="campaign-demo">
 	<h1 class="campaign-demo__title">確認用ページ</h1>
-	<!-- DEBUG START
-	     外すときは、このブロックと css/debug.css、
-	     js/parameter.js の DEBUG ブロックを消す。 -->
+	<!-- DEBUG START ここから DEBUG END までを消す -->
 	<p class="debug-note">計測タグは GTM のみ</p>
 	<p class="held-params__title">保有パラメータ</p>
 	<dl class="held-params" id="held-params"></dl>

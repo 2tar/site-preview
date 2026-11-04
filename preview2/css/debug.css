@@ -1,6 +1,9 @@
 @charset "utf-8";
 
-/* 確認用の表示。本番ではこのファイルを読み込まない。 */
+/* DEBUG CSS
+   このファイルを消す。
+   HTML は「DEBUG CSS」の1行と、DEBUG START 〜 DEBUG END。
+   JS は parameter.js の DEBUG START 〜 DEBUG END。 */
 
 .debug-note {
     margin: 28px 0 0;

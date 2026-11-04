@@ -7,8 +7,9 @@
 <meta name="referrer" content="no-referrer-when-downgrade">
 <title>移動中</title>
 <link rel="stylesheet" href="css/lp.css?v=3">
+<!-- DEBUG CSS この1行を消す -->
 <link rel="stylesheet" href="css/debug.css?v=2">
-<script src="js/parameter.js?v=4"></script>
+<script src="js/parameter.js?v=5"></script>
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
@@ -39,9 +40,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 	<div class="relay__spinner" aria-hidden="true"></div>
 	<p class="relay__text" id="relay-status" role="status" aria-live="polite">エントリーページへ移動しています…</p>
 	<p class="relay__sub">自動的に移動しない場合は、しばらくお待ちください。</p>
-	<!-- DEBUG START
-	     外すときは、このブロックと css/debug.css、
-	     js/parameter.js の DEBUG ブロックと debugEmit / debugHolds を消す。 -->
+	<!-- DEBUG START ここから DEBUG END までを消す -->
 	<p class="debug-note">計測タグは GTM のみ</p>
 	<p class="held-params__title">保有パラメータ</p>
 	<dl class="held-params" id="held-params"></dl>
