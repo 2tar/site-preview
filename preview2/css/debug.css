@@ -1,0 +1,97 @@
+@charset "utf-8";
+
+/* 確認用の表示。本番ではこのファイルを読み込まない。 */
+
+.debug-note {
+    margin: 28px 0 0;
+    font-size: 14px;
+    color: #777;
+}
+
+.debug-clear {
+    display: block;
+    max-width: 360px;
+    margin: 16px auto 0;
+    padding: 10px 16px;
+    border: 1px solid #ccc;
+    border-radius: 9999px;
+    background: #fff;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.held-params__title {
+    margin: 28px 0 0;
+    font-size: 14px;
+    color: #777;
+}
+
+.held-params {
+    max-width: 420px;
+    margin: 8px auto 0;
+    padding: 0;
+    text-align: left;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.held-params div {
+    display: grid;
+    grid-template-columns: 9.5em 1fr;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.held-params dt,
+.held-params dd {
+    margin: 0;
+}
+
+.held-params dt {
+    color: #777;
+}
+
+.held-params dd {
+    word-break: break-all;
+}
+
+.relay__dest {
+    width: 100%;
+    max-width: 420px;
+    margin: 8px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: left;
+    word-break: break-all;
+}
+
+.relay__steps {
+    list-style: none;
+    width: 100%;
+    max-width: 420px;
+    margin: 8px 0 0;
+    padding: 0;
+    text-align: left;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.relay__steps li {
+    padding: 4px 0;
+    color: #999;
+}
+
+.relay__steps li.is-run {
+    color: #333;
+    font-weight: bold;
+}
+
+.relay__steps li.is-ok {
+    color: #1a7f37;
+}
+
+.relay__steps li.is-ng {
+    color: #b42318;
+}

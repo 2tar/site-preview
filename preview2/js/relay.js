@@ -1,8 +1,10 @@
+/* デバッグ表示は js/debug.js。
+   外すときは debugEmit の呼び出しと debugHolds の分岐、その2関数を消す。
+   HTML の DEBUG ブロック、css/debug.css、js/debug.js も同時に外す。 */
 (function() {
     "use strict";
 
     var CONFIG = {
-        containers: ["GTM-M4RDPRQ", "GTM-NDXPKRP", "GTM-5MTD7V", "GTM-T9WR56C"],
         timeoutMs: 3000,
         destinations: {
             line: "https://miniapp.line.me/2009418018-P1HREl3z"
@@ -13,44 +15,18 @@
     };
 
     var params = new URLSearchParams(window.location.search);
-    var noRedirect = params.get("noredirect") === "1";
     var startedAt = Date.now();
     var finished = false;
-    var statusEl = document.getElementById("relay-status");
-    var stepDefs = [
-        { id: "id", label: "tk / adid を確定" },
-        { id: "data", label: "dataLayer へ custom_data を送る" },
-        { id: "gtm", label: "GTM コンテナを読み込む" },
-        { id: "notice", label: "GTM からの完了通知" },
-        { id: "leave", label: "遷移" }
-    ];
-    var stepState = {};
-    var stepNote = {};
 
-    function renderSteps() {
-        var list = document.getElementById("relay-steps");
-        var marks = { wait: "未着手", run: "進行中", ok: "完了", ng: "失敗" };
-
-        if (!list) {
-            return;
+    function debugEmit(type, detail) {
+        var debug = window.dipinkDebug;
+        if (debug && typeof debug.on === "function") {
+            debug.on(type, detail);
         }
-
-        list.textContent = "";
-        stepDefs.forEach(function(step) {
-            var state = stepState[step.id] || "wait";
-            var item = document.createElement("li");
-            item.className = "is-" + state;
-            item.textContent = marks[state] + "  " + step.label + (stepNote[step.id] ? "（" + stepNote[step.id] + "）" : "");
-            list.appendChild(item);
-        });
     }
 
-    function setStep(id, state, note) {
-        stepState[id] = state;
-        if (note) {
-            stepNote[id] = note;
-        }
-        renderSteps();
+    function debugHolds() {
+        return !!(window.dipinkDebug && window.dipinkDebug.hold);
     }
 
     function pushedEvent() {
@@ -64,13 +40,6 @@
         }
 
         return null;
-    }
-
-    function loadedContainers() {
-        var manager = window.google_tag_manager || {};
-        return CONFIG.containers.filter(function(id) {
-            return !!manager[id];
-        });
     }
 
     function resolveIds() {
@@ -156,88 +125,9 @@
         }
     }
 
-    function showHeldParams(ids) {
-        var list = document.getElementById("held-params");
-        var values = {
-            tk: (ids && ids.tk) || params.get("tk") || "",
-            adid: (ids && ids.adid) || params.get("adid") || ""
-        };
-
-        if (!list) {
-            return;
-        }
-
-        CONFIG.utmParams.forEach(function(name) {
-            values[name] = params.get(name) || "";
-        });
-
-        ["tk", "adid"].concat(CONFIG.utmParams).forEach(function(name) {
-            var row = document.createElement("div");
-            var term = document.createElement("dt");
-            var value = document.createElement("dd");
-            term.textContent = name;
-            value.textContent = values[name] || "（なし）";
-            row.appendChild(term);
-            row.appendChild(value);
-            list.appendChild(row);
-        });
-    }
-
-    function showDestination(url) {
-        var destinationEl = document.getElementById("relay-dest");
-
-        if (destinationEl) {
-            destinationEl.textContent = url;
-        }
-    }
-
-    function setStatus(text) {
-        if (statusEl) {
-            statusEl.textContent = text;
-        }
-    }
-
-    function finish(reason) {
-        if (finished) {
-            return;
-        }
-        finished = true;
-
-        if (reason.indexOf("タイムアウト") !== -1 && (stepState.notice === "run" || !stepState.notice)) {
-            setStep("notice", "ng", "完了通知なし");
-        }
-
-        window.setTimeout(function() {
-            refreshDestination();
-            if (noRedirect) {
-                setStatus("noredirect=1 のため遷移を停止中");
-                setStep("leave", "ok", "noredirect=1 のため停止");
-                return;
-            }
-            setStep("leave", "ok", "遷移します");
-            window.location.replace(destination);
-        }, 0);
-    }
-
-    function watchContainers() {
-        var found = loadedContainers();
-
-        if (found.length) {
-            setStep("gtm", "ok", found.join(" "));
-            return;
-        }
-
-        if (Date.now() - startedAt > CONFIG.timeoutMs) {
-            setStep("gtm", "ng", "読み込めない");
-            return;
-        }
-
-        window.setTimeout(watchContainers, 200);
-    }
-
     function refreshDestination() {
         destination = buildDestination(ids);
-        showDestination(destination);
+        debugEmit("url", destination);
     }
 
     function watchGl() {
@@ -253,35 +143,50 @@
         window.setTimeout(watchGl, 200);
     }
 
+    function finish(reason) {
+        if (finished) {
+            return;
+        }
+        finished = true;
+
+        if (reason.indexOf("タイムアウト") !== -1) {
+            debugEmit("notice", { state: "ng", note: "完了通知なし" });
+        }
+
+        window.setTimeout(function() {
+            refreshDestination();
+            if (debugHolds()) {
+                debugEmit("status", "noredirect=1 のため遷移を停止中");
+                debugEmit("leave", { state: "ok", note: "noredirect=1 のため停止" });
+                return;
+            }
+            debugEmit("leave", { state: "ok", note: "遷移します" });
+            window.location.replace(destination);
+        }, 0);
+    }
+
     var ids = resolveIds();
     var destination = buildDestination(ids);
     var event = pushedEvent();
 
-    renderSteps();
-    showHeldParams(ids);
-    showDestination(destination);
+    debugEmit("url", destination);
+    debugEmit("id", {
+        state: ids ? "ok" : "ng",
+        note: ids ? ids.tk + " / " + ids.adid : "tk/adid なし",
+        ids: ids
+    });
+    debugEmit("data", event ? { state: "ok", note: event.custom_data } : { state: "ng", note: ids ? "dataLayer に無い" : "送らない" });
+    debugEmit("notice", { state: "run", note: "タグシーケンスの完了通知を待機" });
     watchGl();
-
-    if (!ids) {
-        setStep("id", "ng", "tk/adid なし");
-        setStep("data", "ng", "送らない");
-    } else {
-        setStep("id", "ok", ids.tk + " / " + ids.adid);
-        setStep("data", event ? "ok" : "ng", event ? event.custom_data : "dataLayer に無い");
-    }
-
-    setStep("gtm", "run");
-    watchContainers();
-    setStep("notice", "run", "タグシーケンスの完了通知を待機");
 
     window.dipinkRelay = window.dipinkRelay || {};
     window.dipinkRelay.onComplete = function() {
-        setStep("notice", "ok");
+        debugEmit("notice", { state: "ok" });
         finish("GTMから完了通知");
     };
 
     if (window.dipinkRelay.done) {
-        setStep("notice", "ok");
+        debugEmit("notice", { state: "ok" });
         finish("GTMから完了通知");
         return;
     }
