@@ -1,4 +1,13 @@
-/* 確認用の表示を消す場所は、次の印だけ。
+/* リダイレクトページで GTM が呼ぶ関数は window.dipinkRelay.complete。
+   定義は prepareRelay。GTM より先にこのファイルを読むので、ページ表示時点で存在する。
+   呼び出し例: window.dipinkRelay.complete();
+   complete は 0.3 秒待ってから遷移する。
+   呼ばれない場合は startRelay の timeoutMs（1000）で、開いてから 1 秒後に遷移する。
+   _gl の更新もこの 1 秒で打ち切る。1.3 秒までは延ばさない。
+   complete が先に呼ばれていれば、その 1 秒のタイマーは何もしない。
+   tk / adid は URL から読む。dataLayer への custom_data 投入はコメントアウト済みで、印は「後で消す」。
+
+   確認用の表示を消す場所は、次の印だけ。
    - このファイル末尾の DEBUG START 〜 DEBUG END
    - index.html と relay.html の DEBUG CSS の1行
    - index.html と relay.html の DEBUG START 〜 DEBUG END
@@ -112,7 +121,6 @@
     function startRelay() {
         var CONFIG = {
             timeoutMs: 1000,
-            graceMs: 300,
             destinations: {
                 line: "https://miniapp.line.me/2009418018-P1HREl3z"
             },
@@ -268,7 +276,7 @@
                 return;
             }
 
-            if (finished || Date.now() - startedAt > CONFIG.timeoutMs + CONFIG.graceMs) {
+            if (finished || Date.now() - startedAt > CONFIG.timeoutMs) {
                 return;
             }
 
