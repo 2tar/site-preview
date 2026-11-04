@@ -19,10 +19,6 @@
     }
 
     function prepareRelay() {
-        var tk = params.get("tk");
-        var adid = params.get("adid");
-
-        window.dataLayer = window.dataLayer || [];
         window.dipinkRelay = window.dipinkRelay || {
             done: false,
             complete: function() {
@@ -40,14 +36,20 @@
             }
         };
 
+        /* 後で消す。GTMがURLの tk / adid を読むなら不要。
+        var tk = params.get("tk");
+        var adid = params.get("adid");
+
         if (!tk || !adid) {
             return;
         }
 
+        window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({
             event: "dipink_relay",
             custom_data: tk + "_" + adid
         });
+        */
     }
 
     var start = function() {
@@ -122,7 +124,6 @@
         var finished = false;
         var ids = resolveIds();
         var destination = buildDestination(ids);
-        var event = pushedEvent();
 
         report("url", destination);
         report("id", {
@@ -130,7 +131,10 @@
             note: ids ? ids.tk + " / " + ids.adid : "tk/adid なし",
             ids: ids
         });
+        /* 後で消す。dataLayer の custom_data 確認。
+        var event = pushedEvent();
         report("data", event ? { state: "ok", note: event.custom_data } : { state: "ng", note: ids ? "dataLayer に無い" : "送らない" });
+        */
         report("notice", { state: "run", note: "complete() を待機" });
         watchGl();
 
@@ -152,6 +156,7 @@
             finish("タイムアウト(" + CONFIG.timeoutMs + "ms)");
         }, CONFIG.timeoutMs);
 
+        /* 後で消す。dataLayer の dipink_relay を読む処理。
         function pushedEvent() {
             var layer = window.dataLayer || [];
             var i;
@@ -164,16 +169,19 @@
 
             return null;
         }
+        */
 
         function resolveIds() {
             var tk = params.get("tk");
             var adid = params.get("adid");
-            var relayEvent = pushedEvent();
-            var parts;
 
             if (tk && adid) {
                 return { tk: tk, adid: adid };
             }
+
+            /* 後で消す。dataLayer に入った custom_data から tk / adid を戻す処理。
+            var relayEvent = pushedEvent();
+            var parts;
 
             if (relayEvent) {
                 parts = String(relayEvent.custom_data).split("_");
@@ -181,6 +189,7 @@
                     return { tk: parts[0], adid: parts[1] };
                 }
             }
+            */
 
             return null;
         }
@@ -308,7 +317,9 @@
         var utmNames = ["utm_source", "utm_medium", "utm_campaign", "utm_content"];
         var stepDefs = [
             { id: "id", label: "tk / adid を確定" },
+            /* 後で消す。dataLayer の custom_data 確認。
             { id: "data", label: "dataLayer へ custom_data を送る" },
+            */
             { id: "notice", label: "GTM の complete()" },
             { id: "leave", label: "遷移" }
         ];
